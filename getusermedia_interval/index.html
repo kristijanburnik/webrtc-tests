@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="js consumer chrome">
+  <head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta content="initial-scale=1, minimum-scale=1, width=device-width" name="viewport">
+    <meta content="Google Chrome is a browser that combines a minimal design with sophisticated technology to make the web faster, safer, and easier." name="description">
+
+  <!-- Legacy -->
+
+    <link href="https://www.google.com/images/icons/product/chrome-32.png" rel="icon" type="image/ico">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&subset=latin" rel="stylesheet">
+    <link href="https://www.google.com/intl/en/chrome/assets/common/css/chrome.min.css" rel="stylesheet">
+
+  <!-- /Legacy -->
+
+
+
+    <!-- Bootstrap CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" type="text/css" >
+
+    <!-- Font Awesome CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- APP CSS -->
+    <link href="app.css" rel="stylesheet" type="text/css" >
+
+
+    <title>WebRTC Speech Recognition demo</title>
+
+  </head>
+  <body>
+
+    <header>
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+	        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+	          <span style='color:white;'>Menu</span>
+	        </button>
+	        <a class="navbar-brand" href=".">
+
+            <strong>RTC test</strong>
+          </a>
+        </div>
+
+      </nav>
+
+      <div class="container center-text">
+        <h3>Speech <i class="fa fa-arrow-right"></i> Text</h3>
+      </div>
+    </header>
+
+
+    <!-- MAIN -->
+    <div id="main" class="container">
+
+
+      <!-- Section title ( demo type )  -->
+      <div class="ng-cloak">
+        <h1>RTC demo</h1>
+      </div>
+
+
+      <div>
+        <canvas id="photo"></canvas>
+        <video id="vid" style="visibility:hidden;" ></video>
+      </div>
+
+    </div>
+
+    <footer>
+      <div class="container">
+        Google WebRTC team
+      </div>
+    </footer>
+
+    <!-- SUPPORTING SCRIPTS -->
+
+    <!-- jQuery -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <!-- Bootstrap js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+    <!-- AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular.min.js"></script>
+    <script src="https://code.angularjs.org/1.2.18/angular-route.min.js"></script>
+
+    <!-- WebRTC adapter  -->
+    <script type="text/javascript" src="./adapter.js"></script>
+
+    <!-- PROJECT SCRIPTS -->
+    <script src="./test.js"></script>
+
+
+  </body>
+</html>
