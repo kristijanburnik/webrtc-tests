@@ -27,7 +27,7 @@
     <link href="../common/app.css" rel="stylesheet" type="text/css" >
 
 
-    <title>WebRTC Speech Recognition demo</title>
+    <title>Send audio - WebRTC Tests</title>
 
   </head>
   <body>
@@ -58,14 +58,16 @@
 
 
       <!-- Section title ( demo type )  -->
-      <div class="ng-cloak">
-        <h1>RTC demo</h1>
+      <div>
+        <h1>RTC demo - send audio file over PeerConnection</h1>
       </div>
 
 
-      <div>
-        <canvas id="photo"></canvas>
-        <video id="vid" style="visibility:hidden;" ></video>
+      <div>        
+        
+        Remote audio/video sink<br>
+        <video id="remoteVideo" autoplay unmute></video>
+
       </div>
 
     </div>
