@@ -1,14 +1,18 @@
 
-// the main object
+// the object used to wrap getting the audio from a file to a stream
 var t = {
+
+  // singleton instances
+  _audioContext:null,
+  _mediaStreamDestination:null,
+
+  // loads a wave file from an url and decodes it
   _loadAudioBuffer:function(url, context , callback) {
       trace("load audio buffer");
       var request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
-
       request.onload = function(oEvent) {
-        trace("onload");
         context.decodeAudioData(request.response, function (decodedAudio) {
           trace("decode audio data");
           callback( decodedAudio );
@@ -16,70 +20,70 @@ var t = {
       }
       request.send(null);
   },
-  
-  _audioContext:null,
-  getAudioContext:function(){
+
+  // provides a singleton for |AudioContext|
+  _getAudioContext:function(){
     if ( ! t._audioContext  )
         t._audioContext = new AudioContext();
-    
     return t._audioContext;
   },
-  
-  _mediaStreamDestination:null,
-  getMediaStreamDestination:function(){      
-    if ( ! t._mediaStreamDestination )  
-      t._mediaStreamDestination = t.getAudioContext().createMediaStreamDestination();
-      
+
+
+  // provides a singleton media stream destination
+  _getMediaStreamDestination:function(){
+    if ( ! t._mediaStreamDestination )
+      t._mediaStreamDestination =
+        t._getAudioContext().createMediaStreamDestination();
     return t._mediaStreamDestination;
-    
   },
-  
+
+  ////////////////////////////////////////////////////////////////////////
+
+  // loads audio file from url, decodes it and
+  // returns the media stream with audio attached
   streamAudioFile:function( url , callback ){
-  
-      t._mediaStreamDestination = t.getMediaStreamDestination();
-      
-      var context = t.getAudioContext();
-      
+
+      var context = t._getAudioContext();
+
       t._loadAudioBuffer( url , context , function(voiceSoundBuffer) {
-        
+
+        // get a media stream destination for attaching
+        var mediaStreamDestination = t._getMediaStreamDestination();
+
+        // attach an |AudioBufferSourceNode| to the decoded audio file
+        // the SourceNode will then provide data
+        // to the stream |mediaStreamDestination|
         var voiceSound = context.createBufferSource();
-        voiceSound.buffer = voiceSoundBuffer;        
-        voiceSound.connect( t._mediaStreamDestination );        
+        voiceSound.buffer = voiceSoundBuffer;
+        voiceSound.connect( mediaStreamDestination );
         voiceSound.start(0);
 
-        // set the media stream
-        callback( t._mediaStreamDestination.stream );
+        // return the the media stream to caller via callback
+        callback( mediaStreamDestination.stream );
 
       });
 
      return t;
 
-   },
+   } // streamAudioFile
 
-}
+}; // t
+
+////////////////////////////////////////////////////////////////////////////////
 
 window.onload = function() {
 
+  //////////////////////////////////////////////////////////////////////////////
+  // RTCPeerConnection BOILER PLATE
+
   var localStream, localPeerConnection, remotePeerConnection;
 
-  function handleError(e){
-    console.error(e);
-  }
+  function handleError(e){ console.error(e); }
 
   function gotStream(stream){
     trace("Received local stream");
     localVideo.src = URL.createObjectURL(stream);
     localStream = stream;
-    callButton.disabled = false;
-  }
-
-  function start() {
-    trace("Requesting local stream");
-    startButton.disabled = true;
-    getUserMedia({audio:true, video:true}, gotStream,
-      function(error) {
-        trace("getUserMedia error: ", error);
-      });
   }
 
   function gotLocalDescription(description){
@@ -95,16 +99,11 @@ window.onload = function() {
     localPeerConnection.setRemoteDescription(description);
   }
 
-
-  // for receiveing the stream over network
-  function gotRemoteStream(event){
-    remoteVideo.src = URL.createObjectURL(event.stream);
-    trace("Received remote stream");
-  }
-
   function gotLocalIceCandidate(event){
     if (event.candidate) {
-      remotePeerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+      remotePeerConnection.addIceCandidate(
+        new RTCIceCandidate(event.candidate)
+      );
       trace("Local ICE candidate: \n" + event.candidate.candidate);
     }
   }
@@ -115,11 +114,20 @@ window.onload = function() {
       trace("Remote ICE candidate: \n " + event.candidate.candidate);
     }
   }
-  
-  // main: 
-  
+  // end: RTCPeerConnection BOILER PLATE
+  //////////////////////////////////////////////////////////////////////////////
+
+  // for receiveing the stream over network --> attach to a <video> element
+  function gotRemoteStream(event){
+    var remoteVideo = document.getElementById('remoteVideo');
+    remoteVideo.src = URL.createObjectURL(event.stream);
+    trace("Received remote stream");
+  }
+
+  // MAIN //////////////////////////////////////////////////////////////////////
+
   var url = "sample.wav";
-  
+
   // get the stream from file and establish a peer connection
   t.streamAudioFile( url , function( localStream ) {
     var servers = null;
@@ -133,10 +141,9 @@ window.onload = function() {
     remotePeerConnection.onicecandidate = gotRemoteIceCandidate;
     remotePeerConnection.onaddstream = gotRemoteStream; // the magic on remote
 
-    // provide stream to the remote side
+    // attach locally to provide the stream to the remote side
     localPeerConnection.addStream( localStream );
     trace("Added localStream to localPeerConnection");
     localPeerConnection.createOffer(gotLocalDescription,handleError);
   });
-  
 }
