@@ -45,7 +45,7 @@ var t = {
 
       var context = t._getAudioContext();
 
-      t._loadAudioBuffer( url , context , function(voiceSoundBuffer) {
+      t._loadAudioBuffer( url , context , function(decodedAudio) {
 
         // get a media stream destination for attaching
         var mediaStreamDestination = t._getMediaStreamDestination();
@@ -54,7 +54,7 @@ var t = {
         // the SourceNode will then provide data
         // to the stream |mediaStreamDestination|
         var voiceSound = context.createBufferSource();
-        voiceSound.buffer = voiceSoundBuffer;
+        voiceSound.buffer = decodedAudio;
         voiceSound.connect( mediaStreamDestination );
         voiceSound.start(0);
 
