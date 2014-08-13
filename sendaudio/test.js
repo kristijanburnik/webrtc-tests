@@ -40,7 +40,7 @@ var t = {
   ////////////////////////////////////////////////////////////////////////
 
   // loads audio file from url, decodes it and
-  // returns the media stream with audio attached
+  // returns the media stream with audio attached via callback
   streamAudioFile:function( url , callback ){
 
       var context = t._getAudioContext();
