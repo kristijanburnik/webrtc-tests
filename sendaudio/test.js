@@ -1,3 +1,4 @@
+var local, remote, stream;
 
 // the object used to wrap getting the audio from a file to a stream
 var t = {
@@ -41,7 +42,11 @@ var t = {
 
   // loads audio file from url, decodes it and
   // returns the media stream with audio attached via callback
-  streamAudioFile:function( url , callback ){
+  streamAudioFile:function( url , callback , onStopCallback ) {
+
+      onStopCallback = onStopCallback || function( event, stream ) {
+        console.warn("No onStopCallback provided for streamAudioFile");
+      };
 
       var context = t._getAudioContext();
 
@@ -56,6 +61,14 @@ var t = {
         var voiceSound = context.createBufferSource();
         voiceSound.buffer = decodedAudio;
         voiceSound.connect( mediaStreamDestination );
+
+        voiceSound.onended = function(e) {
+          onStopCallback( e, mediaStreamDestination.stream );
+        }
+
+        console.log("Context", context);
+        console.log("Voice" , voiceSound);
+
         voiceSound.start(0);
 
         // return the the media stream to caller via callback
@@ -121,7 +134,6 @@ window.onload = function() {
   function gotRemoteStream(event){
     var remoteVideo = document.getElementById('remoteVideo');
     remoteVideo.src = URL.createObjectURL(event.stream);
-    trace("Received remote stream");
   }
 
   // MAIN //////////////////////////////////////////////////////////////////////
@@ -129,14 +141,17 @@ window.onload = function() {
   var url = "sample.wav";
 
   // get the stream from file and establish a peer connection
-  t.streamAudioFile( url , function( localStream ) {
+  t.streamAudioFile( url , function( localStream ) { // OnStartCallback
     var servers = null;
 
-    localPeerConnection = new RTCPeerConnection(servers);
+    stream = localStream;
+    console.log(localStream);
+
+    local = localPeerConnection = new RTCPeerConnection(servers);
     trace("Created local peer connection object localPeerConnection");
     localPeerConnection.onicecandidate = gotLocalIceCandidate;
 
-    remotePeerConnection = new RTCPeerConnection(servers);
+    remote = remotePeerConnection = new RTCPeerConnection(servers);
     trace("Created remote peer connection object remotePeerConnection");
     remotePeerConnection.onicecandidate = gotRemoteIceCandidate;
     remotePeerConnection.onaddstream = gotRemoteStream; // the magic on remote
@@ -144,6 +159,9 @@ window.onload = function() {
     // attach locally to provide the stream to the remote side
     localPeerConnection.addStream( localStream );
     trace("Added localStream to localPeerConnection");
-    localPeerConnection.createOffer(gotLocalDescription,handleError);
+    localPeerConnection.createOffer(gotLocalDescription, handleError);
+  } , function( event, localStream ) { // OnStoppedCallback
+      // local track stopped.
+    console.info("It stopped!");
   });
 }
