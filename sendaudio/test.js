@@ -132,8 +132,9 @@ window.onload = function() {
 
   // for receiveing the stream over network --> attach to a <video> element
   function gotRemoteStream(event){
-    var remoteVideo = document.getElementById('remoteVideo');
-    remoteVideo.src = URL.createObjectURL(event.stream);
+    var audioContext = new AudioContext();
+    var realAudioInput = audioContext.createMediaStreamSource(event.stream);
+    realAudioInput.connect(audioContext.destination);
   }
 
   // MAIN //////////////////////////////////////////////////////////////////////
