@@ -89,7 +89,58 @@ window.onload = function() {
   //////////////////////////////////////////////////////////////////////////////
   // RTCPeerConnection BOILER PLATE
 
-  var localStream, localPeerConnection, remotePeerConnection;
+  var localStream, localPeerConnection, remotePeerConnection, audioRecorder;
+
+  // Find the line in sdpLines that starts with |prefix|, and, if specified,
+  // contains |substr| (case-insensitive search).
+  function findLine(sdpLines, prefix, substr) {
+    return findLineInRange(sdpLines, 0, -1, prefix, substr);
+  }
+
+  // Find the line in sdpLines[startLine...endLine - 1] that starts with |prefix|
+  // and, if specified, contains |substr| (case-insensitive search).
+  function findLineInRange(sdpLines, startLine, endLine, prefix, substr) {
+    var realEndLine = endLine !== -1 ? endLine : sdpLines.length;
+    for (var i = startLine; i < realEndLine; ++i) {
+      if (sdpLines[i].indexOf(prefix) === 0) {
+        if (!substr ||
+            sdpLines[i].toLowerCase().indexOf(substr.toLowerCase()) !== -1) {
+          return i;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Gets the codec payload type from an a=rtpmap:X line.
+  function getCodecPayloadType(sdpLine) {
+    var pattern = new RegExp('a=rtpmap:(\\d+) \\w+\\/\\d+');
+    var result = sdpLine.match(pattern);
+    return (result && result.length === 2) ? result[1] : null;
+  }
+
+  // Adds fmtp param to specified codec in SDP.
+  function addCodecParam(sdp, codec, param) {
+    var sdpLines = sdp.split('\r\n');
+
+    // Find opus payload.
+    var index = findLine(sdpLines, 'a=rtpmap', codec);
+    var payload;
+    if (index) {
+      payload = getCodecPayloadType(sdpLines[index]);
+    }
+
+    // Find the payload in fmtp line.
+    var fmtpLineIndex = findLine(sdpLines, 'a=fmtp:' + payload.toString());
+    if (fmtpLineIndex === null) {
+      return sdp;
+    }
+
+    sdpLines[fmtpLineIndex] = sdpLines[fmtpLineIndex].concat('; ', param);
+
+    sdp = sdpLines.join('\r\n');
+    return sdp;
+  }
 
   function handleError(e){ console.error(e); }
 
@@ -101,6 +152,9 @@ window.onload = function() {
 
   function gotLocalDescription(description){
     localPeerConnection.setLocalDescription(description);
+    description.sdp = addCodecParam(description.sdp,
+                                    'opus/48000',
+                                    'useinbandfec=1');
     trace("Offer from localPeerConnection: \n" + description.sdp);
     remotePeerConnection.setRemoteDescription(description);
     remotePeerConnection.createAnswer(gotRemoteDescription,handleError);
@@ -108,6 +162,9 @@ window.onload = function() {
 
   function gotRemoteDescription(description){
     remotePeerConnection.setLocalDescription(description);
+    description.sdp = addCodecParam(description.sdp,
+                                    'opus/48000',
+                                    'useinbandfec=1');
     trace("Answer from remotePeerConnection: \n" + description.sdp);
     localPeerConnection.setRemoteDescription(description);
   }
@@ -131,10 +188,12 @@ window.onload = function() {
   //////////////////////////////////////////////////////////////////////////////
 
   // for receiveing the stream over network --> attach to a <video> element
-  function gotRemoteStream(event){
+  function gotRemoteStream(event) {
     var audioContext = new AudioContext();
     var realAudioInput = audioContext.createMediaStreamSource(event.stream);
     realAudioInput.connect(audioContext.destination);
+    audioRecorder = new Recorder(realAudioInput);
+    audioRecorder.record();
   }
 
   // MAIN //////////////////////////////////////////////////////////////////////
@@ -163,6 +222,9 @@ window.onload = function() {
     localPeerConnection.createOffer(gotLocalDescription, handleError);
   } , function( event, localStream ) { // OnStoppedCallback
       // local track stopped.
-    console.info("It stopped!");
+    audioRecorder.stop();
+    audioRecorder.exportWAV( function (blob) {
+      Recorder.forceDownload( blob, "myRecording.wav" );
+    });
   });
 }
